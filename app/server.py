@@ -4,6 +4,7 @@ import re
 
 import torch
 import torch.nn.functional as F
+from huggingface_hub import hf_hub_download
 from flask import Flask, request, jsonify, send_from_directory
 
 # ------------------------------------------------------------
@@ -36,11 +37,39 @@ app = Flask(
 # Configuration
 # ------------------------------------------------------------
 
-CHECKPOINT_PATH = os.path.join(
+HF_REPO_ID = "eraja2008/EsakkiAI-v7"
+HF_FILENAME = "esakkiai_v7_best.pt"
+
+LOCAL_CHECKPOINT_PATH = os.path.join(
     PROJECT_ROOT,
     "checkpoints",
-    "esakkiai_v7_best.pt"
+    HF_FILENAME
 )
+
+if os.path.exists(LOCAL_CHECKPOINT_PATH):
+
+    CHECKPOINT_PATH = LOCAL_CHECKPOINT_PATH
+
+    print("Loading V7 checkpoint from local storage.")
+
+else:
+
+    print("Local checkpoint not found.")
+    print("Downloading V7 checkpoint from Hugging Face...")
+
+    HF_TOKEN = os.environ.get("HF_TOKEN")
+
+    if not HF_TOKEN:
+        raise RuntimeError(
+            "HF_TOKEN is required when the local V7 checkpoint "
+            "is not available."
+        )
+
+    CHECKPOINT_PATH = hf_hub_download(
+        repo_id=HF_REPO_ID,
+        filename=HF_FILENAME,
+        token=HF_TOKEN
+    )
 
 DEVICE = torch.device("cpu")
 
